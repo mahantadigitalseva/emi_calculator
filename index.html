@@ -1,0 +1,261 @@
+<!doctype html>
+<html lang="hi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EMI Calculator — Simple & Clean UI</title>
+  <style>
+    :root{
+      --bg:#0f1724; /* dark navy */
+      --card:#0b1220;
+      --accent:#06b6d4; /* teal */
+      --muted:#94a3b8;
+      --glass: rgba(255,255,255,0.04);
+      --radius:14px;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      min-height:100vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background: linear-gradient(180deg,#071028 0%, #081426 60%);
+      color:#e6eef6;
+      padding:32px;
+    }
+
+    .container{
+      width:100%;
+      max-width:920px;
+      display:grid;
+      grid-template-columns: 1fr 420px;
+      gap:20px;
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+      border:1px solid rgba(255,255,255,0.04);
+      padding:22px;
+      border-radius:var(--radius);
+      box-shadow: 0 8px 24px rgba(2,6,23,0.6);
+    }
+
+    h1{font-size:20px;margin:0 0 8px}
+    p.lead{margin:0 0 18px;color:var(--muted);font-size:14px}
+
+    label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}
+    .row{display:flex;gap:12px}
+    input[type=number], input[type=range], select{
+      width:100%;
+      padding:10px 12px;
+      border-radius:10px;
+      border:1px solid rgba(255,255,255,0.04);
+      background:var(--card);
+      color:inherit;
+      font-size:15px;
+      outline:none;
+    }
+    .field{margin-bottom:14px}
+
+    .small{font-size:12px;color:var(--muted)}
+    .actions{display:flex;gap:10px;margin-top:8px}
+    button{
+      padding:10px 14px;border-radius:10px;border:0;cursor:pointer;font-weight:600;
+      background:linear-gradient(90deg,var(--accent),#7c3aed);color:#021024
+    }
+    button.ghost{background:transparent;border:1px solid rgba(255,255,255,0.06);color:var(--muted)}
+
+    /* Result card */
+    .result{
+      padding:18px;border-radius:12px;background:linear-gradient(180deg, rgba(6,182,212,0.06), rgba(124,58,237,0.03));
+      border:1px solid rgba(255,255,255,0.03);
+    }
+    .result .big{font-size:26px;font-weight:700;margin:6px 0}
+    .meta{display:flex;gap:12px;flex-wrap:wrap}
+    .meta .item{flex:1;min-width:140px;padding:10px;background:var(--glass);border-radius:10px;text-align:center}
+    .meta .label{font-size:12px;color:var(--muted)}
+
+    /* Responsive */
+    @media (max-width:880px){
+      .container{grid-template-columns: 1fr;}
+    }
+
+    footer{margin-top:14px;font-size:12px;color:var(--muted)}
+
+    /* tiny helper */
+    .muted{color:var(--muted)}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Left: Controls -->
+    <div class="card" aria-labelledby="title-controls">
+      <h1 id="title-controls">EMI Calculator</h1>
+      <p class="lead">Loan amount, interest rate aur tenure daal kar turant EMI, total payment aur total interest dekhiye.</p>
+
+      <div class="field">
+        <label for="principal">Loan Amount (₹)</label>
+        <input type="number" id="principal" min="0" step="100" value="100000" />
+      </div>
+
+      <div class="row">
+        <div style="flex:1">
+          <div class="field">
+            <label for="annualRate">Annual Interest Rate (%)</label>
+            <input type="number" id="annualRate" min="0" step="0.01" value="12" />
+            <div class="small muted">Monthly interest = Annual ÷ 12</div>
+          </div>
+        </div>
+
+        <div style="width:140px">
+          <div class="field">
+            <label for="tenure">Tenure (months)</label>
+            <input type="number" id="tenure" min="1" step="1" value="24" />
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="tenureYears">Ya Tenure (years)</label>
+        <input type="range" id="tenureYears" min="1" max="30" value="2" />
+        <div class="small muted">Years: <span id="tyears">2</span></div>
+      </div>
+
+      <div class="actions">
+        <button id="calcBtn" aria-label="Calculate EMI">Calculate EMI</button>
+        <button id="resetBtn" class="ghost" aria-label="Reset inputs">Reset</button>
+      </div>
+
+      <footer>Tip: Excel me =PMT(monthlyRate, months, -principal) formula use karke bhi nikal sakte hain.</footer>
+    </div>
+
+    <!-- Right: Results -->
+    <div class="card result" aria-live="polite">
+      <div style="display:flex;align-items:center;justify-content:space-between">
+        <div>
+          <div class="small muted">Monthly EMI</div>
+          <div id="emiVal" class="big">₹ 0</div>
+        </div>
+        <div style="text-align:right">
+          <div class="small muted">Loan Amount</div>
+          <div id="loanVal">₹ 0</div>
+        </div>
+      </div>
+
+      <div style="height:12px"></div>
+
+      <div class="meta">
+        <div class="item"><div class="label">Total Payment</div><div id="totalPayment">₹ 0</div></div>
+        <div class="item"><div class="label">Total Interest</div><div id="totalInterest">₹ 0</div></div>
+        <div class="item"><div class="label">Tenure</div><div id="tenureOut">0 months</div></div>
+      </div>
+
+      <div style="height:12px"></div>
+      <div class="small muted">Amortization quick preview (first 3 months)</div>
+      <div style="margin-top:10px;background:rgba(255,255,255,0.02);padding:10px;border-radius:8px">
+        <div id="amortPreview" class="small muted">--</div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Helper: format currency
+    function fmt(n){
+      return new Intl.NumberFormat('en-IN', {maximumFractionDigits:2, minimumFractionDigits:2}).format(n);
+    }
+
+    // Elements
+    const principalEl = document.getElementById('principal');
+    const annualRateEl = document.getElementById('annualRate');
+    const tenureEl = document.getElementById('tenure');
+    const tenureYearsEl = document.getElementById('tenureYears');
+    const tyears = document.getElementById('tyears');
+    const calcBtn = document.getElementById('calcBtn');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const emiVal = document.getElementById('emiVal');
+    const loanVal = document.getElementById('loanVal');
+    const totalPayment = document.getElementById('totalPayment');
+    const totalInterest = document.getElementById('totalInterest');
+    const tenureOut = document.getElementById('tenureOut');
+    const amortPreview = document.getElementById('amortPreview');
+
+    function calculateEMI(){
+      const P = parseFloat(principalEl.value) || 0;
+      const annual = parseFloat(annualRateEl.value) || 0;
+      // If tenure input changed by range (years), keep sync
+      const months = parseInt(tenureEl.value) || 0;
+
+      if(P <= 0 || months <= 0){
+        emiVal.textContent = '₹ 0';
+        loanVal.textContent = '₹ 0';
+        totalPayment.textContent = '₹ 0';
+        totalInterest.textContent = '₹ 0';
+        tenureOut.textContent = '0 months';
+        amortPreview.textContent = '--';
+        return;
+      }
+
+      const R = annual / 12 / 100; // monthly rate decimal
+      // EMI formula
+      const x = Math.pow(1+R, months);
+      const emi = (P * R * x) / (x - 1);
+      const totalPay = emi * months;
+      const totInterest = totalPay - P;
+
+      emiVal.textContent = '₹ ' + fmt(emi);
+      loanVal.textContent = '₹ ' + fmt(P);
+      totalPayment.textContent = '₹ ' + fmt(totalPay);
+      totalInterest.textContent = '₹ ' + fmt(totInterest);
+      tenureOut.textContent = months + ' months';
+
+      // Build tiny amortization preview: show month, principal component, interest component, balance
+      let balance = P;
+      let preview = [];
+      for(let m=1;m<=Math.min(3, months);m++){
+        const interestForMonth = balance * R;
+        const principalComponent = emi - interestForMonth;
+        balance = balance - principalComponent;
+        preview.push(`${m}. Interest: ₹ ${fmt(interestForMonth)} | Principal: ₹ ${fmt(principalComponent)} | Balance: ₹ ${fmt(Math.max(balance,0))}`);
+      }
+      amortPreview.textContent = preview.join('\n');
+    }
+
+    // Sync range and months
+    tenureYearsEl.addEventListener('input', ()=>{
+      const yrs = parseInt(tenureYearsEl.value,10);
+      tyears.textContent = yrs;
+      tenureEl.value = yrs * 12;
+      calculateEMI();
+    });
+
+    // If months typed manually, update years range
+    tenureEl.addEventListener('input', ()=>{
+      const months = parseInt(tenureEl.value,10) || 0;
+      const yrs = Math.round(months/12);
+      tenureYearsEl.value = Math.min(Math.max(yrs, parseInt(tenureYearsEl.min)), parseInt(tenureYearsEl.max));
+      tyears.textContent = tenureYearsEl.value;
+      calculateEMI();
+    });
+
+    // Recalculate on value change
+    [principalEl, annualRateEl].forEach(el => el.addEventListener('input', calculateEMI));
+
+    calcBtn.addEventListener('click', (e)=>{ e.preventDefault(); calculateEMI(); });
+    resetBtn.addEventListener('click', (e)=>{
+      e.preventDefault();
+      principalEl.value = 100000;
+      annualRateEl.value = 12;
+      tenureEl.value = 24;
+      tenureYearsEl.value = 2;
+      tyears.textContent = 2;
+      calculateEMI();
+    });
+
+    // initial calc
+    calculateEMI();
+  </script>
+</body>
+</html>
